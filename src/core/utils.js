@@ -1,4 +1,4 @@
-export const APP_VERSION='1.2.1';
+export const APP_VERSION='1.2.3';
 export const CREATOR='عبد الله <Abo Lilah>';
 export const BUILD_DATE='2026-08-12';
 export const APP_NAME='نظام تسعير السليبر';

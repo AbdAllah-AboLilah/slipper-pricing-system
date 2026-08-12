@@ -1,5 +1,5 @@
 const DB_NAME='slipperPricingDB';
-const DB_VERSION=2;
+const DB_VERSION=4;
 const STORES=['settings','suppliers','items','tiers','invoices','attachments','meta','logs'];
 let dbp;
 export function db(){if(dbp)return dbp;dbp=new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=()=>{const d=r.result;for(const s of STORES){if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'})}};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});return dbp}

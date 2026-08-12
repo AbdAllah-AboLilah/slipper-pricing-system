@@ -1,4 +1,4 @@
-const CACHE='slipper-pricing-v1.2.1';
+const CACHE='slipper-pricing-v1.2.3';
 const CORE=['./','./index.html','./manifest.webmanifest','./src/styles.css','./src/app.js','./src/core/db.js','./src/core/state.js','./src/core/utils.js','./src/modules/invoices.js','./src/modules/pricing.js','./src/modules/catalog.js','./src/modules/settings.js','./src/modules/export.js','./src/modules/receipt.js','./src/modules/backup.js','./src/modules/version.js','./assets/icon.svg'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
