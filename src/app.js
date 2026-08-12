@@ -170,7 +170,24 @@ async function renderBackup(){app.innerHTML=`<section class="grid grid-2"><div c
 async function openAttachment(id){const a=await get('attachments',id);if(!a?.blob){toast('المرفق غير موجود','error');return}const url=URL.createObjectURL(a.blob);const w=window.open(url,'_blank');if(!w)toast('اسمح بفتح نافذة جديدة لعرض المرفق','error');setTimeout(()=>URL.revokeObjectURL(url),60000)}
 addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();document.getElementById('saveInv')?.click()}});
 addEventListener('beforeunload',()=>{if(state.draft){try{recalcDraft(state.draft);autosaveInvoice(state.draft)}catch{}}});
-load().then(()=>render()).catch(e=>{console.error('Startup error:',e);app.innerHTML='<div class="card"><h2>تعذر تشغيل النظام</h2><p>حدث خطأ أثناء تشغيل قاعدة البيانات المحلية.</p><p><b>الحل:</b> أغلق أي تبويب قديم للنظام ثم أعد فتحه.</p><pre style="white-space:pre-wrap;direction:ltr;text-align:left">'+esc(e?.message||String(e))+'</pre></div>'});
+const bootStarted=Date.now();
+let bootTimer=setTimeout(()=>{
+  if(app.querySelector('.startup-card')){
+    app.innerHTML='<section class="card startup-card"><h2>النظام لم يكمل التشغيل</h2><p>ده غالبًا بسبب نسخة قديمة محفوظة في المتصفح أو قاعدة بيانات محلية مشغولة.</p><div class="toolbar"><button class="btn primary" id="retryBoot">إعادة المحاولة</button><button class="btn danger" id="resetLocal">إعادة تهيئة بيانات هذا النظام</button></div><div class="note"><b>تنبيه:</b> إعادة التهيئة تمسح بيانات هذا النظام من هذا الجهاز فقط.</div></section>';
+    document.getElementById('retryBoot').onclick=()=>location.reload();
+    document.getElementById('resetLocal').onclick=async()=>{if(!confirm('سيتم حذف قاعدة بيانات نظام تسعير السليبر من هذا الجهاز فقط. هل أنت متأكد؟'))return;try{indexedDB.deleteDatabase('slipperPricingDB_v13');localStorage.clear();sessionStorage.clear();location.reload()}catch(err){alert(err.message||err)}};
+  }
+},5000);
+load().then(()=>{clearTimeout(bootTimer);return render()}).catch(e=>{clearTimeout(bootTimer);console.error('Startup error:',e);app.innerHTML='<div class="card"><h2>تعذر تشغيل النظام</h2><p>حدث خطأ أثناء تشغيل قاعدة البيانات المحلية.</p><div class="toolbar"><button class="btn primary" id="retryBootNow">إعادة المحاولة</button><button class="btn danger" id="resetDbNow">إعادة تهيئة البيانات المحلية</button></div><pre style="white-space:pre-wrap;direction:ltr;text-align:left">'+esc(e?.message||String(e))+'</pre></div>';document.getElementById('retryBootNow').onclick=()=>location.reload();document.getElementById('resetDbNow').onclick=()=>{if(confirm('حذف بيانات هذا النظام من هذا الجهاز؟')){indexedDB.deleteDatabase('slipperPricingDB_v13');location.reload()}}});
 addEventListener('error',e=>{if(e?.error)console.error('Global error',e.error)});
 addEventListener('unhandledrejection',e=>console.error('Unhandled promise',e.reason));
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator){
+  window.addEventListener('load', async()=>{
+    try{
+      const regs=await navigator.serviceWorker.getRegistrations();
+      for(const r of regs){ if(r.active?.scriptURL && !r.active.scriptURL.endsWith('/sw.js')) await r.unregister(); }
+      const reg=await navigator.serviceWorker.register('./sw.js?v=1.3.1',{updateViaCache:'none'});
+      await reg.update().catch(()=>{});
+    }catch(e){console.warn('Service worker setup skipped',e)}
+  });
+}
