@@ -1,0 +1,26 @@
+import {all,put,del} from '../core/db.js';
+import {num,uid} from '../core/utils.js';
+export async function loadPricing(){return {tiers:await all('tiers'),settings:Object.fromEntries((await all('settings')).map(x=>[x.id,x.value]))}}
+export function findTier(pre,type,tiers){return tiers.filter(x=>x.type===type&&x.enabled!==false).sort((a,b)=>num(a.from)-num(b.from)).find(x=>pre>=num(x.from)&&pre<=num(x.to))||null}
+export function calcLine(line,settings,tiers,items){
+ const unit=Math.max(1,num(line.unit)||1),qty=Math.max(0,num(line.qty)),purchaseCarton=Math.max(0,num(line.purchaseCartonPrice??line.cartonPrice));
+ const purchasePerPiece=purchaseCarton/unit;
+ const discountRate=Math.max(0,num(line.discountRate??0)/100);
+ const costPerPiece=Math.max(0,num(line.costPerPieceManual??(purchasePerPiece*(1-discountRate))));
+ const basis=settings.marginBasis==='purchase'?purchasePerPiece:costPerPiece;
+ const rate=Math.max(0,num(settings.marginRate??.35));
+ const pre=basis*(1+rate);
+ const tier=findTier(pre,line.type,tiers);
+ const manualText=String(line.manualFinalPrice??'').trim();
+ const manual=manualText===''?null:num(manualText);
+ const final=manual&&manual>0?manual:(tier?num(tier.price):null);
+ const matches=final==null?[]:items.filter(x=>x.type===line.type&&Math.abs(num(x.discountedPrice??x.sellPrice)-final)<0.0001);
+ const item=matches[0]||null;
+ const pieces=qty*unit,total=purchaseCarton*qty;
+ let status='ok';
+ if(manual&&manual>0)status=matches.length===0?'manual-no-item':matches.length>1?'multiple-match':'manual';
+ else if(!tier)status='no-tier';else if(matches.length===0)status='no-item';else if(matches.length>1)status='multiple-match';
+ return {...line,unit,qty,purchaseCartonPrice:purchaseCarton,cartonPrice:purchaseCarton,purchasePerPiece,costPerPiece,discountRate,basisPrice:basis,prePrice:pre,finalPrice:final,tierId:tier?.id||'',erpItemId:item?.id||'',erpName:item?.name||'',barcode:item?.barcode||'',itemId:item?.itemId||'',lrp:item?.lrp||'',lrb:item?.lrb||'',pieces,total,targetProfit:final==null?null:final-costPerPiece,targetMargin:final?((final-costPerPiece)/final):null,matchesCount:matches.length,status}
+}
+export async function saveTier(t){return put('tiers',{...t,id:t.id||uid('tier')})}
+export async function removeTier(id){return del('tiers',id)}

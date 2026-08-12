@@ -1,0 +1,13 @@
+{
+  "name":"نظام تسعير السليبر",
+  "short_name":"تسعير السليبر",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#f5f7fb",
+  "theme_color":"#1f2937",
+  "lang":"ar",
+  "dir":"rtl",
+  "orientation":"any",
+  "icons":[{"src":"assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

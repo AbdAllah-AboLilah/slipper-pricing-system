@@ -1,0 +1,6 @@
+import {snapshotStores,clear,putMany} from '../core/db.js';
+const STORES=['settings','suppliers','items','tiers','invoices','attachments','meta','logs'];
+import {base64FromBlob,blobFromDataUrl,downloadBlob,now,APP_VERSION} from '../core/utils.js';
+const STORES=['settings','suppliers','items','tiers','invoices','attachments','meta','logs'];
+export async function exportBackup(){const data=await snapshotStores(STORES);for(const a of data.attachments||[]){if(a.blob instanceof Blob){a.blobData=await base64FromBlob(a.blob);delete a.blob}}const blob=new Blob([JSON.stringify({app:'slipper-pricing-system',version:APP_VERSION,exportedAt:now(),data})],{type:'application/json'});downloadBlob(blob,`slipper-pricing-backup-${now().slice(0,10)}.json`)}
+export async function importBackup(file){const json=JSON.parse(await file.text());if(json?.app!=='slipper-pricing-system')throw new Error('invalid backup');const data=json.data||{};for(const s of STORES)if(Array.isArray(data[s]))await clear(s);for(const s of STORES){const rows=data[s]||[];for(const row of rows){if(s==='attachments'&&row.blobData){row.blob=await blobFromDataUrl(row.blobData);delete row.blobData} }if(rows.length)await putMany(s,rows)}}

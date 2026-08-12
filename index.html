@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1f2937">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="نظام محلي لتسعير فواتير شراء السليبر وFoot Wear وتحويلها إلى أصناف ERP">
+<title>نظام تسعير السليبر</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<header class="topbar">
+ <div class="brand"><div class="brand-title">نظام تسعير السليبر</div><div class="brand-sub">Local-First · IndexedDB · Modular PWA</div></div>
+ <div class="meta"><span id="versionBadge">v1.2.1</span><span id="creatorBadge">عبد الله &lt;Abo Lilah&gt;</span><span id="buildBadge">Build 2026-08-12</span><span id="onlineState" class="online">●</span></div>
+</header>
+<nav class="tabs" aria-label="التنقل">
+ <button data-view="invoice" class="active">🧾 فاتورة</button>
+ <button data-view="saved">📚 المحفوظة</button>
+ <button data-view="catalog">📦 البيانات الأساسية</button>
+ <button data-view="pricing">⚙️ التسعير</button>
+ <button data-view="export">📤 ERP</button>
+ <button data-view="backup">💾 نسخ احتياطي</button>
+</nav>
+<main id="app"></main>
+<div id="toast" class="toast"></div>
+<input id="attachmentInput" type="file" accept="image/*,application/pdf" hidden>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
