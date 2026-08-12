@@ -132,11 +132,12 @@ async function renderCatalog(){
 function downloadTemplate(){const headers=IMPORT_FIELDS.map(x=>x[1]);const sample=['مثال صنف','1001','123456789','مثال مورد','SUP-01','أحذية','سليبرات','100','150','135','100','95','LRP-001','LRB-001'];const csv='\uFEFF'+headers.join(',')+'\n'+sample.join(',');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ERP_Master_Import_Template.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 
 let importSession=null;
+async function ensureXLSX(){if(window.XLSX)return window.XLSX;await new Promise((resolve,reject)=>{const sc=document.createElement('script');sc.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';sc.onload=resolve;sc.onerror=()=>reject(new Error('تعذر تحميل محرك Excel. استخدم CSV أو اتصل بالإنترنت ثم حاول مرة أخرى.'));document.head.appendChild(sc)});return window.XLSX}
 async function readWorkbook(file){
  if(/\.csv$/i.test(file.name)){const text=await file.text();const rows=parseCSV(text);const headers=Object.keys(rows[0]||{});return {sheets:[{name:'CSV',matrix:[headers,...rows.map(r=>headers.map(h=>r[h]??''))]}]}}
- if(!window.XLSX)throw new Error('محرك Excel غير متاح');
- const wb=window.XLSX.read(await file.arrayBuffer(),{type:'array'});
- return {sheets:wb.SheetNames.map(name=>({name,matrix:window.XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:'',raw:false}))}))};
+ const XLSX=await ensureXLSX();
+ const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+ return {sheets:wb.SheetNames.map(name=>({name,matrix:XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:'',raw:false}))}))};
 }
 function guessMapping(headers){const norm=headers.map(normalizeKey);const find=(patterns)=>{const i=norm.findIndex(h=>patterns.some(p=>h.includes(normalizeKey(p))));return i>=0?String(i):''};return {name:find(['اسم الصنف','الصنف','itemname','name']),itemId:find(['id','itemid','كود الصنف']),barcode:find(['barcode','باركود','الباركود']),supplier:find(['المورد','supplier']),supplierCode:find(['كود المورد','suppliercode']),mainCategory:find(['القسم الرئيسي','maincategory']),subCategory:find(['القسم الفرعي','القسم','subcategory']),basePrice:find(['السعر','price']),salePriceBeforeDiscount:find(['سعر البيع','قبل الخصم','saleprice']),salePriceAfterDiscount:find(['السعر بعد الخصم','بعد الخصم','discountedprice']),purchasePrice:find(['سعر الشراء','purchase']),cost:find(['التكلفة','cost']),lrp:find(['lrp']),lrb:find(['lrb'])}}
 function mappingOptions(headers,selected){return `<option value="">— غير مربوط —</option>`+headers.map((h,i)=>`<option value="${i}" ${String(selected)===String(i)?'selected':''}>${esc(h||`عمود ${i+1}`)}</option>`).join('')}
@@ -169,5 +170,7 @@ async function renderBackup(){app.innerHTML=`<section class="grid grid-2"><div c
 async function openAttachment(id){const a=await get('attachments',id);if(!a?.blob){toast('المرفق غير موجود','error');return}const url=URL.createObjectURL(a.blob);const w=window.open(url,'_blank');if(!w)toast('اسمح بفتح نافذة جديدة لعرض المرفق','error');setTimeout(()=>URL.revokeObjectURL(url),60000)}
 addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();document.getElementById('saveInv')?.click()}});
 addEventListener('beforeunload',()=>{if(state.draft){try{recalcDraft(state.draft);autosaveInvoice(state.draft)}catch{}}});
-load().then(()=>render()).catch(e=>{console.error('Startup error:',e);app.innerHTML='<div class="card"><h2>تعذر تشغيل النظام</h2><p>حدث خطأ أثناء تحميل البيانات المحلية. أعد تحميل الصفحة مرة أخرى.</p><pre style="white-space:pre-wrap;direction:ltr;text-align:left">'+esc(e?.message||String(e))+'</pre></div>'});
+load().then(()=>render()).catch(e=>{console.error('Startup error:',e);app.innerHTML='<div class="card"><h2>تعذر تشغيل النظام</h2><p>حدث خطأ أثناء تشغيل قاعدة البيانات المحلية.</p><p><b>الحل:</b> أغلق أي تبويب قديم للنظام ثم أعد فتحه.</p><pre style="white-space:pre-wrap;direction:ltr;text-align:left">'+esc(e?.message||String(e))+'</pre></div>'});
+addEventListener('error',e=>{if(e?.error)console.error('Global error',e.error)});
+addEventListener('unhandledrejection',e=>console.error('Unhandled promise',e.reason));
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
