@@ -4,9 +4,61 @@
 <meta charset="utf-8">
 <script>
 (function(){
+ var box=null,list=null,count=0;
+ function ensureBox(){
+  if(box)return box;
+  box=document.createElement('div');
+  box.id='fatalErrorBox';
+  box.setAttribute('style','position:fixed;left:0;right:0;bottom:0;z-index:999999;background:#7f1d1d;color:#fff;font-family:Tahoma,Arial,sans-serif;font-size:13px;max-height:45vh;display:flex;flex-direction:column;box-shadow:0 -4px 14px rgba(0,0,0,.4);direction:rtl');
+  var head=document.createElement('div');
+  head.setAttribute('style','display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#991b1b;font-weight:bold');
+  var title=document.createElement('span');
+  title.textContent='⚠️ حصل خطأ في النظام (اضغط اخفاء عشان تقفل الشريط ده)';
+  var btn=document.createElement('button');
+  btn.textContent='إخفاء';
+  btn.setAttribute('style','background:#fff;color:#7f1d1d;border:none;border-radius:6px;padding:5px 14px;font-weight:bold;cursor:pointer;font-size:13px');
+  btn.onclick=function(){box.style.display='none'};
+  head.appendChild(title);head.appendChild(btn);
+  list=document.createElement('div');
+  list.setAttribute('style','overflow:auto;padding:8px 12px;white-space:pre-wrap;word-break:break-word;font-family:monospace;direction:ltr;text-align:left;line-height:1.5');
+  box.appendChild(head);box.appendChild(list);
+  (document.body||document.documentElement).appendChild(box);
+  return box;
+ }
+ window.__showFatalError=function(msg){
+  try{
+   ensureBox();
+   box.style.display='flex';
+   count++;
+   var line=document.createElement('div');
+   line.setAttribute('style','padding:6px 0;border-bottom:1px solid rgba(255,255,255,.25)');
+   var t=new Date().toLocaleTimeString('ar-EG');
+   line.textContent='['+count+'] '+t+' — '+String(msg);
+   list.insertBefore(line,list.firstChild);
+  }catch(e){}
+ };
+ window.addEventListener('error',function(e){
+  if(e && e.target && e.target!==window && (e.target.tagName==='SCRIPT'||e.target.tagName==='LINK')){
+   var src=e.target.src||e.target.href||'?';
+   window.__showFatalError('فشل تحميل ملف: '+src+' — تأكد إن الملف ده فعلاً موجود على GitHub بنفس المسار.');
+   return;
+  }
+  var m=e && e.error && e.error.stack ? e.error.stack : (e.message||'خطأ غير معروف');
+  if(e && e.filename)m+=' \n(الملف: '+e.filename+(e.lineno?':'+e.lineno:'')+')';
+  window.__showFatalError(m);
+ },true);
+ window.addEventListener('unhandledrejection',function(e){
+  var r=e && e.reason;
+  var m=(r && r.stack) ? r.stack : String(r);
+  window.__showFatalError('Promise لم يتم التعامل معها: '+m);
+ });
+})();
+</script>
+<script>
+(function(){
  try{
-  if(sessionStorage.getItem('swreset_1_3_3'))return;
-  sessionStorage.setItem('swreset_1_3_3','1');
+  if(sessionStorage.getItem('swreset_1_3_4'))return;
+  sessionStorage.setItem('swreset_1_3_4','1');
   if(!('serviceWorker' in navigator)){return}
   navigator.serviceWorker.getRegistrations().then(function(regs){
    var found=regs.length>0;
@@ -27,12 +79,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon.svg">
-<link rel="stylesheet" href="src/styles.css?v=1.3.3">
+<link rel="stylesheet" href="src/styles.css?v=1.3.4">
 </head>
 <body>
 <header class="topbar">
  <div class="brand"><div class="brand-title">نظام تسعير السليبر</div><div class="brand-sub">Local-First · IndexedDB · Modular PWA</div></div>
- <div class="meta"><span id="versionBadge">v1.3.3</span><span id="creatorBadge">عبد الله &lt;Abo Lilah&gt;</span><span id="buildBadge">Build 2026-08-13</span><span id="onlineState" class="online">●</span></div>
+ <div class="meta"><span id="versionBadge">v1.3.4</span><span id="creatorBadge">عبد الله &lt;Abo Lilah&gt;</span><span id="buildBadge">Build 2026-08-13</span><span id="onlineState" class="online">●</span></div>
 </header>
 <nav class="tabs" aria-label="التنقل">
  <button data-view="invoice" class="active">🧾 فاتورة</button>
@@ -45,6 +97,6 @@
 <main id="app"><section class="card startup-card"><h2>جاري تشغيل النظام…</h2><p>يتم تحميل قاعدة البيانات المحلية.</p><div class="startup-progress"><span></span></div><small>يتم التحقق من قاعدة البيانات والنسخة الحالية…</small></section></main>
 <div id="toast" class="toast"></div>
 <input id="attachmentInput" type="file" accept="image/*,application/pdf" hidden>
-<script type="module" src="src/app.js?v=1.3.3"></script>
+<script type="module" src="src/app.js?v=1.3.4"></script>
 </body>
 </html>

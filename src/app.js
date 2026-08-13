@@ -212,9 +212,10 @@ async function boot(){
     await render();
   }catch(e){
     bootError=e;dbReady=false;console.error('Startup error:',e);renderSafeFallback();
+    if(window.__showFatalError)window.__showFatalError('فشل تشغيل قاعدة البيانات المحلية عند الإقلاع: '+(e&&e.message||e));
   }
   // Retry once in the background after a short delay; never block the UI.
-  if(!dbReady){setTimeout(async()=>{try{await load();dbReady=true;bootError=null;renderDbStatus();await render()}catch(e){bootError=e;renderSafeFallback()}},2500)}
+  if(!dbReady){setTimeout(async()=>{try{await load();dbReady=true;bootError=null;renderDbStatus();await render()}catch(e){bootError=e;renderSafeFallback();if(window.__showFatalError)window.__showFatalError('فشلت المحاولة الثانية لتشغيل قاعدة البيانات: '+(e&&e.message||e))}},2500)}
 }
 boot();
 addEventListener('error',e=>{if(e?.error)console.error('Global error',e.error)});
