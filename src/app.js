@@ -137,7 +137,7 @@ async function readWorkbook(file){
  if(/\.csv$/i.test(file.name)){const text=await file.text();const rows=parseCSV(text);const headers=Object.keys(rows[0]||{});return {sheets:[{name:'CSV',matrix:[headers,...rows.map(r=>headers.map(h=>r[h]??''))]}]}}
  const XLSX=await ensureXLSX();
  const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
- return {sheets:wb.SheetNames.map(name=>({name,matrix:XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:'',raw:false}))}))};
+ return {sheets:wb.SheetNames.map(name=>({name,matrix:XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:'',raw:false})}))};
 }
 function guessMapping(headers){const norm=headers.map(normalizeKey);const find=(patterns)=>{const i=norm.findIndex(h=>patterns.some(p=>h.includes(normalizeKey(p))));return i>=0?String(i):''};return {name:find(['اسم الصنف','الصنف','itemname','name']),itemId:find(['id','itemid','كود الصنف']),barcode:find(['barcode','باركود','الباركود']),supplier:find(['المورد','supplier']),supplierCode:find(['كود المورد','suppliercode']),mainCategory:find(['القسم الرئيسي','maincategory']),subCategory:find(['القسم الفرعي','القسم','subcategory']),basePrice:find(['السعر','price']),salePriceBeforeDiscount:find(['سعر البيع','قبل الخصم','saleprice']),salePriceAfterDiscount:find(['السعر بعد الخصم','بعد الخصم','discountedprice']),purchasePrice:find(['سعر الشراء','purchase']),cost:find(['التكلفة','cost']),lrp:find(['lrp']),lrb:find(['lrb'])}}
 function mappingOptions(headers,selected){return `<option value="">— غير مربوط —</option>`+headers.map((h,i)=>`<option value="${i}" ${String(selected)===String(i)?'selected':''}>${esc(h||`عمود ${i+1}`)}</option>`).join('')}
