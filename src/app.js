@@ -171,22 +171,60 @@ async function openAttachment(id){const a=await get('attachments',id);if(!a?.blo
 addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();document.getElementById('saveInv')?.click()}});
 addEventListener('beforeunload',()=>{if(state.draft){try{recalcDraft(state.draft);autosaveInvoice(state.draft)}catch{}}});
 const bootStarted=Date.now();
-let bootTimer=setTimeout(()=>{
-  if(app.querySelector('.startup-card')){
-    app.innerHTML='<section class="card startup-card"><h2>النظام لم يكمل التشغيل</h2><p>ده غالبًا بسبب نسخة قديمة محفوظة في المتصفح أو قاعدة بيانات محلية مشغولة.</p><div class="toolbar"><button class="btn primary" id="retryBoot">إعادة المحاولة</button><button class="btn danger" id="resetLocal">إعادة تهيئة بيانات هذا النظام</button></div><div class="note"><b>تنبيه:</b> إعادة التهيئة تمسح بيانات هذا النظام من هذا الجهاز فقط.</div></section>';
-    document.getElementById('retryBoot').onclick=()=>location.reload();
-    document.getElementById('resetLocal').onclick=async()=>{if(!confirm('سيتم حذف قاعدة بيانات نظام تسعير السليبر من هذا الجهاز فقط. هل أنت متأكد؟'))return;try{indexedDB.deleteDatabase('slipperPricingDB_v13');localStorage.clear();sessionStorage.clear();location.reload()}catch(err){alert(err.message||err)}};
+let dbReady=false;
+let bootError=null;
+let bootPromise=null;
+function renderDbStatus(){
+  const el=document.getElementById('dbStatus');
+  if(!el)return;
+  if(dbReady){el.textContent='● التخزين المحلي جاهز';el.className='db-status ok'}
+  else if(bootError){el.textContent='● وضع مؤقت — قاعدة البيانات لم تجهز';el.className='db-status warn'}
+  else{el.textContent='● جاري تجهيز التخزين المحلي';el.className='db-status loading'}
+}
+function renderSafeFallback(){
+  app.innerHTML=`<section class="grid"><div class="card hero-card"><div class="toolbar space"><div><h2>نظام تسعير السليبر</h2><div class="muted">النظام يعمل الآن، ويمكنك فتح الشاشات. يتم تجهيز التخزين المحلي في الخلفية.</div></div><span id="dbStatus" class="db-status loading">● جاري تجهيز التخزين المحلي</span></div><div class="note" style="margin-top:12px">لن يتم فقد أي بيانات. إذا تعذر تشغيل IndexedDB سيظهر لك السبب بدل توقف الشاشة.</div><div id="dbError" class="note" style="display:none;margin-top:10px"></div></div><div class="card"><h3>ابدأ من هنا</h3><div class="grid grid-2"><button class="btn primary" id="safeInvoice">🧾 فتح الفاتورة</button><button class="btn" id="safeCatalog">📦 البيانات الأساسية</button><button class="btn" id="safePricing">⚙️ التسعير</button><button class="btn" id="safeERP">📤 ERP</button></div></div></section>`;
+  renderDbStatus();
+  document.getElementById('safeInvoice').onclick=()=>{state.view='invoice';if(dbReady)render();else renderInvoiceSafe()};
+  document.getElementById('safeCatalog').onclick=()=>{state.view='catalog';renderSafeView('catalog')};
+  document.getElementById('safePricing').onclick=()=>{state.view='pricing';renderSafeView('pricing')};
+  document.getElementById('safeERP').onclick=()=>{state.view='export';renderSafeView('export')};
+  if(bootError){const e=document.getElementById('dbError');e.style.display='block';e.innerHTML=`<b>مشكلة التخزين:</b> ${esc(bootError.message||String(bootError))}<div class="toolbar" style="margin-top:8px"><button class="btn danger" id="resetV14">تهيئة التخزين المحلي من جديد</button><button class="btn" id="retryV14">إعادة المحاولة</button></div>`;document.getElementById('resetV14').onclick=resetLocalDb;document.getElementById('retryV14').onclick=()=>location.reload()}
+}
+function renderInvoiceSafe(){
+  const d=state.draft||newDraft('INV-'+todayISO().replaceAll('-','')+'-0001',state.settings.defaultType||'Slipper');
+  state.draft=d;
+  app.innerHTML=`<section class="grid"><div class="card hero-card"><div class="toolbar space"><div><h2>🧾 فاتورة تسعير شراء</h2><div class="muted">وضع تشغيل مؤقت: التخزين المحلي لم يجهز بعد.</div></div><span id="dbStatus" class="db-status warn">● وضع مؤقت</span></div><div class="invoice-head" style="margin-top:12px"><div class="field"><label>رقم الفاتورة</label><input value="${esc(d.invoiceNo)}" readonly></div><div class="field"><label>التاريخ</label><input value="${todayISO()}" readonly></div><div class="field"><label>المورد</label><input placeholder="سيتم تفعيل الموردين بعد تجهيز التخزين المحلي"></div><div class="field"><label>النوع</label><select>${itemTypeOptions(d.type)}</select></div></div><div class="note" style="margin-top:10px">تم فتح الشاشة بدل تجميد النظام. عند جاهزية التخزين سيعود النظام للعمل الكامل تلقائيًا.</div></div></section>`;
+}
+function renderSafeView(view){
+  const titles={catalog:'📦 البيانات الأساسية',pricing:'⚙️ التسعير',export:'📤 ERP'};
+  app.innerHTML=`<section class="grid"><div class="card"><h2>${titles[view]||'النظام'}</h2><p>الشاشة متاحة، لكن التخزين المحلي لم يجهز بعد. انتظر لحظات أو استخدم إعادة المحاولة.</p><div class="toolbar"><button class="btn primary" id="retrySafe">إعادة المحاولة</button></div></div></section>`;
+  document.getElementById('retrySafe').onclick=()=>location.reload();
+}
+async function resetLocalDb(){
+  try{localStorage.clear();sessionStorage.clear();const req=indexedDB.deleteDatabase('slipperPricingDB_v14');req.onsuccess=()=>location.reload();req.onerror=()=>location.reload();req.onblocked=()=>{alert('أغلق أي تبويب آخر للنظام ثم اضغط موافق.');location.reload()}}catch(e){location.reload()}
+}
+async function boot(){
+  renderSafeFallback();
+  const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('انتهت مهلة تهيئة قاعدة البيانات المحلية (5 ثوانٍ).')),5000));
+  try{
+    await Promise.race([load(),timeout]);
+    dbReady=true;bootError=null;renderDbStatus();
+    await render();
+  }catch(e){
+    bootError=e;dbReady=false;console.error('Startup error:',e);renderSafeFallback();
   }
-},5000);
-load().then(()=>{clearTimeout(bootTimer);return render()}).catch(e=>{clearTimeout(bootTimer);console.error('Startup error:',e);app.innerHTML='<div class="card"><h2>تعذر تشغيل النظام</h2><p>حدث خطأ أثناء تشغيل قاعدة البيانات المحلية.</p><div class="toolbar"><button class="btn primary" id="retryBootNow">إعادة المحاولة</button><button class="btn danger" id="resetDbNow">إعادة تهيئة البيانات المحلية</button></div><pre style="white-space:pre-wrap;direction:ltr;text-align:left">'+esc(e?.message||String(e))+'</pre></div>';document.getElementById('retryBootNow').onclick=()=>location.reload();document.getElementById('resetDbNow').onclick=()=>{if(confirm('حذف بيانات هذا النظام من هذا الجهاز؟')){indexedDB.deleteDatabase('slipperPricingDB_v13');location.reload()}}});
+  // Retry once in the background after a short delay; never block the UI.
+  if(!dbReady){setTimeout(async()=>{try{await load();dbReady=true;bootError=null;renderDbStatus();await render()}catch(e){bootError=e;renderSafeFallback()}},2500)}
+}
+boot();
 addEventListener('error',e=>{if(e?.error)console.error('Global error',e.error)});
 addEventListener('unhandledrejection',e=>console.error('Unhandled promise',e.reason));
 if('serviceWorker' in navigator){
-  window.addEventListener('load', async()=>{
+  window.addEventListener('load',async()=>{
     try{
       const regs=await navigator.serviceWorker.getRegistrations();
-      for(const r of regs){ if(r.active?.scriptURL && !r.active.scriptURL.endsWith('/sw.js')) await r.unregister(); }
-      const reg=await navigator.serviceWorker.register('./sw.js?v=1.3.1',{updateViaCache:'none'});
+      for(const r of regs){try{await r.unregister()}catch{}}
+      const reg=await navigator.serviceWorker.register('./sw.js?v=1.3.2',{updateViaCache:'none'});
       await reg.update().catch(()=>{});
     }catch(e){console.warn('Service worker setup skipped',e)}
   });

@@ -1,4 +1,4 @@
-const DB_NAME='slipperPricingDB_v13';
+const DB_NAME='slipperPricingDB_v14';
 const DB_VERSION=1;
 const STORES=['settings','suppliers','items','tiers','invoices','attachments','meta','logs'];
 let dbp;
