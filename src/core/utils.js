@@ -1,6 +1,6 @@
-export const APP_VERSION='1.3.2';
+export const APP_VERSION='1.3.3';
 export const CREATOR='عبد الله <Abo Lilah>';
-export const BUILD_DATE='2026-08-12';
+export const BUILD_DATE='2026-08-13';
 export const APP_NAME='نظام تسعير السليبر';
 export const TYPES=[{key:'Slipper',label:'Slipper'},{key:'Winter',label:'Winter'}];
 export const todayISO=()=>{const d=new Date();return new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit'}).format(d)};

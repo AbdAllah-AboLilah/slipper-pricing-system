@@ -2,6 +2,21 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<script>
+(function(){
+ try{
+  if(sessionStorage.getItem('swreset_1_3_3'))return;
+  sessionStorage.setItem('swreset_1_3_3','1');
+  if(!('serviceWorker' in navigator)){return}
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+   var found=regs.length>0;
+   var wipeCaches=('caches' in window)?caches.keys().then(function(keys){return Promise.all(keys.map(function(k){return caches.delete(k)}))}):Promise.resolve();
+   var unreg=Promise.all(regs.map(function(r){return r.unregister()}));
+   Promise.all([unreg,wipeCaches]).then(function(){if(found)location.reload()}).catch(function(){if(found)location.reload()});
+  }).catch(function(){});
+ }catch(e){}
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#1f2937">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,12 +27,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon.svg">
-<link rel="stylesheet" href="src/styles.css?v=1.3.2">
+<link rel="stylesheet" href="src/styles.css?v=1.3.3">
 </head>
 <body>
 <header class="topbar">
  <div class="brand"><div class="brand-title">نظام تسعير السليبر</div><div class="brand-sub">Local-First · IndexedDB · Modular PWA</div></div>
- <div class="meta"><span id="versionBadge">v1.3.2</span><span id="creatorBadge">عبد الله &lt;Abo Lilah&gt;</span><span id="buildBadge">Build 2026-08-12</span><span id="onlineState" class="online">●</span></div>
+ <div class="meta"><span id="versionBadge">v1.3.3</span><span id="creatorBadge">عبد الله &lt;Abo Lilah&gt;</span><span id="buildBadge">Build 2026-08-13</span><span id="onlineState" class="online">●</span></div>
 </header>
 <nav class="tabs" aria-label="التنقل">
  <button data-view="invoice" class="active">🧾 فاتورة</button>
@@ -30,6 +45,6 @@
 <main id="app"><section class="card startup-card"><h2>جاري تشغيل النظام…</h2><p>يتم تحميل قاعدة البيانات المحلية.</p><div class="startup-progress"><span></span></div><small>يتم التحقق من قاعدة البيانات والنسخة الحالية…</small></section></main>
 <div id="toast" class="toast"></div>
 <input id="attachmentInput" type="file" accept="image/*,application/pdf" hidden>
-<script type="module" src="src/app.js?v=1.3.2"></script>
+<script type="module" src="src/app.js?v=1.3.3"></script>
 </body>
 </html>
