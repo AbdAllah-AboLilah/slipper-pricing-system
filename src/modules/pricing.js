@@ -14,7 +14,7 @@ export function calcLine(line,settings,tiers,items){
  const manualText=String(line.manualFinalPrice??'').trim();
  const manual=manualText===''?null:num(manualText);
  const final=manual&&manual>0?manual:(tier?num(tier.price):null);
- const matches=final==null?[]:items.filter(x=>x.type===line.type&&Math.abs(num(x.discountedPrice??x.sellPrice)-final)<0.0001);
+ const matches=(()=>{if(final==null)return [];if(tier&&tier.itemId){const linked=items.find(x=>x.id===tier.itemId);if(linked)return [linked]}return items.filter(x=>x.subCategory===line.type&&Math.abs(num(x.salePriceAfterDiscount??x.sellPrice)-final)<0.0001)})();
  const chosen=line.manualErpItemId?matches.find(x=>x.id===line.manualErpItemId):null;
  const item=chosen||matches[0]||null;
  const pieces=qty*unit,total=purchaseCarton*qty;
