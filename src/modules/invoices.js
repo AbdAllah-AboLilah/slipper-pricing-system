@@ -6,4 +6,4 @@ export async function saveInvoice(inv){return put('invoices',{...inv,saved:true,
 export async function autosaveInvoice(inv){return put('invoices',{...inv,saved:!!inv.saved,autoSaved:!inv.saved,updatedAt:now()})}
 export async function listInvoices(){return (await all('invoices')).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)))}
 export async function getInvoice(id){return get('invoices',id)}
-export async function deleteInvoice(id){return del('invoices',id)}
+export async function deleteInvoice(id){const atts=(await all('attachments')).filter(a=>a.invoiceId===id);for(const a of atts)await del('attachments',a.id);return del('invoices',id)}
