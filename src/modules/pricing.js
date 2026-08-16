@@ -9,7 +9,7 @@ export function calcLine(line,settings,tiers,items){
  const discountFraction=discountPercent/100;
  const costPerPiece=Math.max(0,num(line.costPerPieceManual??(purchasePerPiece*(1-discountFraction))));
  const basis=settings.marginBasis==='purchase'?purchasePerPiece:costPerPiece;
- const rate=Math.max(0,num(settings.marginRate??.35));
+ const rate=Math.max(0,num(settings.marginRates?.[line.type]??settings.marginRate??.35));
  const pre=basis*(1+rate);
  const tier=findTier(pre,line.type,tiers);
  const manualText=String(line.manualFinalPrice??'').trim();
