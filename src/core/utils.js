@@ -1,8 +1,9 @@
-export const APP_VERSION='1.3.17';
+// رقم الإصدار وتاريخ البناء مصدرهما الوحيد هو index.html (window.APP_BUILD).
+// القيم هنا احتياطية فقط لو الملف اتحمّل خارج الصفحة (اختبارات مثلًا).
+const BUILD=(typeof globalThis!=='undefined'&&globalThis.APP_BUILD)||{};
+export const APP_VERSION=BUILD.version||'1.4.0';
+export const BUILD_DATE=BUILD.date||'2026-08-21';
 export const CREATOR='عبد الله <Abo Lilah>';
-export const BUILD_DATE='2026-08-13';
-export const APP_NAME='نظام تسعير السليبر';
-export const TYPES=[{key:'Slipper',label:'Slipper'},{key:'Winter',label:'Winter'}];
 export const FONT_OPTIONS=[
  {id:'tahoma',label:'Tahoma (النظام - كان مفعّل)',stack:`Tahoma,'Segoe UI',Arial,sans-serif`,canvas:'Tahoma'},
  {id:'system',label:'خط النظام الافتراضي',stack:`system-ui,-apple-system,'Segoe UI',Tahoma,Arial,sans-serif`,canvas:'Tahoma'},
@@ -19,8 +20,9 @@ export const now=()=>new Date().toISOString();
 export const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,9)}`;
 export const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 export const money=n=>Number(n||0).toLocaleString('ar-EG',{minimumFractionDigits:2,maximumFractionDigits:2});
+// يعرض "—" بدل صفر مضلل لما تكون القيمة غير محددة (صنف بدون شريحة سعر).
+export const moneyOrDash=n=>n==null||n===''?'—':money(n);
 export const num=v=>{const n=Number(String(v??'').replace(/,/g,''));return Number.isFinite(n)?n:0};
-export const fmtDate=d=>d?new Date(d).toLocaleDateString('ar-EG'):'—';
 export function toast(msg,type='info'){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.dataset.type=type;el.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.classList.remove('show'),2400)}
 export function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
 export function excelHtmlBlob(headers,rows,title='ERP Export'){const head=headers.map(h=>`<th>${esc(h)}</th>`).join('');const body=rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('');const html=`<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:5px}th{font-weight:bold;background:#eee}</style></head><body><table><caption>${esc(title)}</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></body></html>`;return new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'})}
@@ -29,3 +31,5 @@ export async function xlsxBlob(headers,rows,sheetName='Sheet1'){const XLSX=await
 export function base64FromBlob(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)})}
 export async function blobFromDataUrl(dataUrl){const [meta,b64]=String(dataUrl).split(',');const mime=(meta.match(/data:(.*?);base64/)||[])[1]||'application/octet-stream';const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));return new Blob([bytes],{type:mime})}
 export function normalizeKey(s){return String(s??'').trim().toLowerCase().replace(/[\s_\-]+/g,'')}
+// debounce عام — بديل نمط setTimeout المتكرر في الواجهة.
+export function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
