@@ -1,8 +1,19 @@
-export const APP_VERSION='1.3.16';
+export const APP_VERSION='1.3.17';
 export const CREATOR='عبد الله <Abo Lilah>';
 export const BUILD_DATE='2026-08-13';
 export const APP_NAME='نظام تسعير السليبر';
 export const TYPES=[{key:'Slipper',label:'Slipper'},{key:'Winter',label:'Winter'}];
+export const FONT_OPTIONS=[
+ {id:'tahoma',label:'Tahoma (النظام - كان مفعّل)',stack:`Tahoma,'Segoe UI',Arial,sans-serif`,canvas:'Tahoma'},
+ {id:'system',label:'خط النظام الافتراضي',stack:`system-ui,-apple-system,'Segoe UI',Tahoma,Arial,sans-serif`,canvas:'Tahoma'},
+ {id:'cairo',label:'Cairo (عصري ومستدير)',stack:`'Cairo',Tahoma,sans-serif`,google:'Cairo:wght@400;700;900',canvas:'Cairo'},
+ {id:'tajawal',label:'Tajawal (بسيط وواضح)',stack:`'Tajawal',Tahoma,sans-serif`,google:'Tajawal:wght@400;700;900',canvas:'Tajawal'},
+ {id:'almarai',label:'Almarai (سميك، مناسب للطباعة)',stack:`'Almarai',Tahoma,sans-serif`,google:'Almarai:wght@400;700;800',canvas:'Almarai'},
+ {id:'ibmplex',label:'IBM Plex Sans Arabic (رسمي)',stack:`'IBM Plex Sans Arabic',Tahoma,sans-serif`,google:'IBM+Plex+Sans+Arabic:wght@400;700',canvas:'IBM Plex Sans Arabic'}
+];
+export const fontOption=id=>FONT_OPTIONS.find(f=>f.id===id)||FONT_OPTIONS[0];
+export const googleFontHref=opt=>opt.google?`https://fonts.googleapis.com/css2?family=${opt.google}&display=swap`:'';
+export function ensureGoogleFont(opt){if(!opt.google)return;const href=googleFontHref(opt);if(document.querySelector(`link[href="${href}"]`))return;const link=document.createElement('link');link.rel='stylesheet';link.href=href;document.head.appendChild(link)}
 export const todayISO=()=>{const d=new Date();return new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit'}).format(d)};
 export const now=()=>new Date().toISOString();
 export const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,9)}`;
